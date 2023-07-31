@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+*.txt
+*.yaml
+*.yml
+hurl-test/
