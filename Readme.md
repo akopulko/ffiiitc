@@ -5,7 +5,7 @@ This little web service performs transaction classification and integrates with 
 ### What is does?
 Every time you add new transaction to FireFly III, either manually or via import tool, web hook will trigger and provide transaction description to `ffiiitc`. It will then be classified using [Naive Bayesian Classification](https://en.wikipedia.org/wiki/Naive_Bayes_classifier) and transaction will be updated with matching category.
 
-> Naive Bayesian classifier used by `ffiiitc` is available [here](https://github.com/navossoc/bayesian). Please read the [license](https://github.com/navossoc/bayesian/blob/master/LICENSE).
+> Naive Bayesian classifier go package used by `ffiiitc` is available [here](https://github.com/navossoc/bayesian). Please read the [license](https://github.com/navossoc/bayesian/blob/master/LICENSE).
 
 ### How to run?
 #### Pre-requisites
