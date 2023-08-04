@@ -14,6 +14,7 @@ import (
 type FireflyTrn struct {
 	Id          int64  `json:"transaction_journal_id"`
 	Description string `json:"description"`
+	Category    string `json:"category_name"`
 }
 
 type FireFlyContent struct {
@@ -45,16 +46,61 @@ func HandleNewTransactionWebHook(c *classifier.TrnClassifier, f *firefly.FireFly
 
 		// perform classification
 		for _, trn := range hookData.Content.Transactions {
-			log.Printf("webhook new transaction: (transaction_journal_id: %v) (description: %s)", trn.Id, trn.Description)
+			log.Printf(
+				"hook new trn: received (id: %v) (description: %s)",
+				trn.Id,
+				trn.Description,
+			)
 			cat := c.ClassifyTransaction(trn.Description)
+			log.Printf("hook new trn: classified (id: %v) (category: %s)", trn.Id, cat)
 			err = f.UpdateTransactionCategory(strconv.FormatInt(trn.Id, 10), cat)
 			if err != nil {
-				log.Printf("error updating transaction: %v\n", trn.Id)
+				log.Printf("hook new trn: error updating (id: %v)", trn.Id)
 				log.Println(err)
 			}
-			log.Printf("classify: (transaction_journal_id: %v) (category: %s)", trn.Id, cat)
+			log.Printf("hook new trn: updated (id: %v)", trn.Id)
+
 		}
 
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// http handler for new transaction
+func HandleUpdateTransactionWebHook(c *classifier.TrnClassifier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		// only allow post method
+		if r.Method != http.MethodPost {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		// decode payload
+		decoder := json.NewDecoder(r.Body)
+		var hookData FireflyWebHook
+		err := decoder.Decode(&hookData)
+		if err != nil {
+			http.Error(w, "bad data", http.StatusBadRequest)
+			return
+		}
+
+		// perform classification
+		for _, trn := range hookData.Content.Transactions {
+			log.Printf(
+				"hook update trn: received (id: %v) (desc: %s) (cat: %s)",
+				trn.Id,
+				trn.Description,
+				trn.Category,
+			)
+
+			err := c.Train(trn.Description, trn.Category)
+			if err != nil {
+				log.Printf("hook update trn: error updating model: %v", err)
+			}
+			log.Printf("hook update trn: updated model for (cat: %s)", trn.Category)
+
+		}
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -89,5 +135,6 @@ func main() {
 	log.Printf("Learned classes:\n %v", cls.Classifier.Classes)
 
 	http.HandleFunc("/", HandleNewTransactionWebHook(cls, fc))
+	http.HandleFunc("/learn", HandleUpdateTransactionWebHook(cls))
 	log.Fatal(http.ListenAndServe(":8080", logRequest(http.DefaultServeMux)))
 }

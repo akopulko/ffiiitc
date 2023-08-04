@@ -59,3 +59,10 @@ func (tc *TrnClassifier) ClassifyTransaction(t string) string {
 	_, likely, _ := tc.Classifier.LogScores(features)
 	return string(tc.Classifier.Classes[likely])
 }
+
+func (tc *TrnClassifier) Train(transaction string, category string) error {
+	features := extractTransactionFeatures(transaction)
+	tc.Classifier.Learn(features, bayesian.Class(category))
+	err := tc.Classifier.WriteToFile(modelFile)
+	return err
+}
