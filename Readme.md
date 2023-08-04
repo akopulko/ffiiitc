@@ -15,7 +15,7 @@ Every time you add new transaction to FireFly III, either manually or via import
 - Have personal access token (PAT) generated in FireFly III. Go to `Options->Profile->OAuth` click `Create new token`
 #### Build
 - `git clone https://github.com/akopulko/ffiiitc.git`
-- `docker build .`
+- `docker build -t ffiiitc:latest .`
 #### Run
 - Stop `docker compose -f docker-compose.yml down`
 - Modify your FireFly III docker compose file add the following
@@ -41,6 +41,28 @@ volumes:
    ffiiitc-data:
 ```
 - Start `docker compose -f docker-compose.yml up -d`
+#### Configure Web Hooks in FireFly
+In `FireFly` go to `Automation -> Webhooks` and click `Create new webhook`
+- Create webhook for transaction classification
+```yaml
+title: classify
+trigger: after transaction creation
+response: transaction details
+delivery: json
+url: http://fftc:8080
+active: checked
+```
+
+- Create webhook for model to learn
+```yaml
+title: learn
+trigger: after transaction update
+response: transaction details
+delivery: json
+url: http://fftc:8080/learn
+active: checked
+```
+
 
 ### Troubleshooting
 You can check `ffiiitc` logs to see if there are any errors:<br> `docker compose logs fftc -f`

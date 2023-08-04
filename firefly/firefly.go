@@ -33,6 +33,7 @@ type FireFlyTransaction struct {
 }
 
 type FireFlyTransactions struct {
+	FireWebHooks bool                 `json:"fire_webhooks"`
 	Transactions []FireFlyTransaction `json:"transactions"`
 }
 
@@ -126,9 +127,10 @@ func (fc *FireFlyHttpClient) SendPutRequestWithToken(url, token string, data []b
 }
 
 func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) error {
-	log.Printf("updating transaction: %s", id)
+	//log.Printf("updating transaction: %s", id)
 
 	trn := FireFlyTransactions{
+		FireWebHooks: false,
 		Transactions: []FireFlyTransaction{
 			{
 				TransactionID: id,
@@ -137,10 +139,16 @@ func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) erro
 		},
 	}
 
+	log.Printf("trn data: %v", trn)
+
 	jsonData, err := json.Marshal(trn)
 	if err != nil {
 		log.Fatalf("Error marshaling JSON data: %v", err)
 	}
+
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, jsonData, "", "    ")
+	log.Printf("json sent: %s", prettyJSON.String())
 
 	_, err = fc.SendPutRequestWithToken(
 		fmt.Sprintf("%s/api/v1/transactions/%s", fc.AppURL, id),
