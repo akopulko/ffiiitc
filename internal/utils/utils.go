@@ -1,4 +1,4 @@
-package classifier
+package utils
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 )
 
 // check if file exists
-func fileExists(filename string) bool {
+func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }
@@ -36,7 +36,7 @@ func validFeature(feature string) bool {
 }
 
 // get slice of categories from training map
-func getCategories(training map[string][]string) []bayesian.Class {
+func GetCategories(training map[string][]string) []bayesian.Class {
 	var result []bayesian.Class
 	for key := range training {
 		result = append(result, bayesian.Class(key))
@@ -45,7 +45,7 @@ func getCategories(training map[string][]string) []bayesian.Class {
 }
 
 // extract unique words from transaction description that are not numeric
-func extractTransactionFeatures(transaction string) []string {
+func ExtractTransactionFeatures(transaction string) []string {
 	var transFeatures []string
 	features := strings.Split(transaction, " ")
 	for _, feature := range features {
@@ -75,7 +75,7 @@ func parseTrainingEntry(data string) (string, []string) {
 
 // build training data map
 // map[Category] = [feature1, feature2, ...]
-func buildTrainingMap(data []string) map[string][]string {
+func BuildTrainingMap(data []string) map[string][]string {
 	resultMap := make(map[string][]string)
 	var features []string
 	var category string

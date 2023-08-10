@@ -20,7 +20,7 @@ func EnvVarExist(varName string) bool {
 	return present
 }
 
-func NewMDConfig() (*Config, error) {
+func NewConfig() (*Config, error) {
 	for _, val := range envVars {
 		exist := EnvVarExist(val)
 		if !exist {
