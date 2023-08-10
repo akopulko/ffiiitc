@@ -1,7 +1,6 @@
 *.txt
 *.yaml
-*.yml
-test/
+test-data/
 bin/
 .gitignore
 .DS_Store

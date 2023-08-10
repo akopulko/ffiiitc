@@ -19,7 +19,8 @@ type Timeout time.Duration
 
 // struct for firefly http client
 type FireFlyHttpClient struct {
-	AppURL  string
+	AppURL string
+	//Timeout Timeout
 	Timeout Timeout
 	Token   string
 	logger  *lgr.Logger
@@ -76,7 +77,7 @@ func (fc *FireFlyHttpClient) sendRequestWithToken(method, url, token string, dat
 		Timeout: time.Duration(fc.Timeout) * time.Second, // Set a reasonable timeout for the request.
 	}
 
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +128,7 @@ func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) erro
 	}
 
 	//log.Printf("trn data: %v", trn)
-	fc.logger.Logf("INFO trn data: %v", trn)
+	fc.logger.Logf("DEBUG trn data: %v", trn)
 
 	jsonData, err := json.Marshal(trn)
 	if err != nil {
@@ -138,7 +139,7 @@ func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) erro
 	var prettyJSON bytes.Buffer
 	json.Indent(&prettyJSON, jsonData, "", "    ")
 	//log.Printf("json sent: %s", prettyJSON.String())
-	fc.logger.Logf("INFO json sent: %s", prettyJSON.String())
+	fc.logger.Logf("DEBUG json sent: %s", prettyJSON.String())
 
 	res, err := fc.SendPutRequestWithToken(
 		fmt.Sprintf("%s/%s/transactions/%s", fc.AppURL, fireflyAPIPrefix, id),
@@ -151,9 +152,10 @@ func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) erro
 	}
 
 	//debug
+	prettyJSON = bytes.Buffer{}
 	json.Indent(&prettyJSON, res, "", "    ")
 	//log.Println(prettyJSON.String())
-	fc.logger.Logf("INFO json received: %s", prettyJSON.String())
+	fc.logger.Logf("DEBUG json received: %s", prettyJSON.String())
 
 	return nil
 }
