@@ -5,24 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/go-pkgz/lgr"
 )
+
+const (
+	fireflyAPIPrefix = "api/v1"
+)
+
+type Timeout time.Duration
 
 // struct for firefly http client
 type FireFlyHttpClient struct {
-	AppURL  string
-	Timeout int
+	AppURL string
+	//Timeout Timeout
+	Timeout Timeout
 	Token   string
-}
-
-func NewFireFlyHttpClient(url, token string, timeout int) *FireFlyHttpClient {
-	return &FireFlyHttpClient{
-		AppURL:  url,
-		Token:   token,
-		Timeout: timeout,
-	}
+	logger  *lgr.Logger
 }
 
 // set of structs for firefly transaction json data
@@ -60,20 +61,30 @@ type FireFlyTransactionsResponse struct {
 	Meta FireFlyPagination              `json:"meta"`
 }
 
+func NewFireFlyHttpClient(url, token string, timeout Timeout, l *lgr.Logger) *FireFlyHttpClient {
+	return &FireFlyHttpClient{
+		AppURL:  url,
+		Token:   token,
+		Timeout: timeout,
+		logger:  l,
+	}
+}
+
 // helper function to make http request to firefly api
 // returns body
-func (fc *FireFlyHttpClient) SendGetRequestWithToken(url, token string, timeout time.Duration) ([]byte, error) {
+func (fc *FireFlyHttpClient) sendRequestWithToken(method, url, token string, data []byte) ([]byte, error) {
 	client := http.Client{
-		Timeout: timeout * time.Second, // Set a reasonable timeout for the request.
+		Timeout: time.Duration(fc.Timeout) * time.Second, // Set a reasonable timeout for the request.
 	}
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the Authorization header with the Bearer token.
 	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -93,37 +104,14 @@ func (fc *FireFlyHttpClient) SendGetRequestWithToken(url, token string, timeout 
 	return bodyBytes, nil
 }
 
-// helper function to make http request to firefly api
-func (fc *FireFlyHttpClient) SendPutRequestWithToken(url, token string, data []byte, timeout time.Duration) ([]byte, error) {
-	client := http.Client{
-		Timeout: timeout * time.Second, // Set a reasonable timeout for the request.
-	}
+// SendGetRequestWithToken sends an HTTP GET request to the FireFly API with a token.
+func (fc *FireFlyHttpClient) SendGetRequestWithToken(url, token string) ([]byte, error) {
+	return fc.sendRequestWithToken(http.MethodGet, url, token, nil)
+}
 
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-
-	// Set the Authorization header with the Bearer token.
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json") // Assuming JSON data, adjust the content type if needed.
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed with status: %d", resp.StatusCode)
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bodyBytes, nil
+// SendPutRequestWithToken sends an HTTP PUT request to the FireFly API with a token and data.
+func (fc *FireFlyHttpClient) SendPutRequestWithToken(url, token string, data []byte) ([]byte, error) {
+	return fc.sendRequestWithToken(http.MethodPut, url, token, data)
 }
 
 func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) error {
@@ -139,40 +127,59 @@ func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) erro
 		},
 	}
 
-	log.Printf("trn data: %v", trn)
+	//log.Printf("trn data: %v", trn)
+	fc.logger.Logf("DEBUG trn data: %v", trn)
 
 	jsonData, err := json.Marshal(trn)
 	if err != nil {
-		log.Fatalf("Error marshaling JSON data: %v", err)
+		//log.Fatalf("Error marshaling JSON data: %v", err)
+		return err
 	}
 
 	var prettyJSON bytes.Buffer
 	json.Indent(&prettyJSON, jsonData, "", "    ")
-	log.Printf("json sent: %s", prettyJSON.String())
+	//log.Printf("json sent: %s", prettyJSON.String())
+	fc.logger.Logf("DEBUG json sent: %s", prettyJSON.String())
 
-	_, err = fc.SendPutRequestWithToken(
-		fmt.Sprintf("%s/api/v1/transactions/%s", fc.AppURL, id),
+	res, err := fc.SendPutRequestWithToken(
+		fmt.Sprintf("%s/%s/transactions/%s", fc.AppURL, fireflyAPIPrefix, id),
 		fc.Token,
 		jsonData,
-		time.Duration(fc.Timeout),
 	)
 
 	if err != nil {
 		return err
 	}
 
+	//debug
+	prettyJSON = bytes.Buffer{}
+	json.Indent(&prettyJSON, res, "", "    ")
+	//log.Println(prettyJSON.String())
+	fc.logger.Logf("DEBUG json received: %s", prettyJSON.String())
+
 	return nil
+}
+
+func buildCategoryDescriptionSlice(data FireFlyTransactionsResponse) []string {
+	var res []string
+	for _, value := range data.Data {
+		for _, trnval := range value.Attributes.Transactions {
+			trn := fmt.Sprintf("%s,%s", trnval.Category, trnval.Description)
+			res = append(res, trn)
+		}
+	}
+	return res
 }
 
 // get all transactions
 // returns slice of strings "transaction description, category"
 func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
 	var pageIndex int
-	log.Println("get first page of transactions")
+	//log.Println("get first page of transactions")
+	fc.logger.Logf("INFO get first page of transactions")
 	res, err := fc.SendGetRequestWithToken(
 		fmt.Sprintf("%s/api/v1/transactions?page=1", fc.AppURL),
 		fc.Token,
-		time.Duration(fc.Timeout),
 	)
 	if err != nil {
 		return nil, err
@@ -183,24 +190,18 @@ func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var transactions []string
-	for _, value := range data.Data {
-		for _, trnval := range value.Attributes.Transactions {
-			trn := fmt.Sprintf("%s,%s", trnval.Category, trnval.Description)
-			transactions = append(transactions, trn)
-		}
-	}
+	resSlice := buildCategoryDescriptionSlice(data)
 
-	log.Printf("transactions total pages: %d", data.Meta.Pagination.TotalPages)
-
+	//log.Printf("transactions total pages: %d", data.Meta.Pagination.TotalPages)
+	fc.logger.Logf("INFO transactions total pages: %d", data.Meta.Pagination.TotalPages)
 	if data.Meta.Pagination.TotalPages > 1 {
-		log.Println("transactions more than 1 page available. iterating")
+		//log.Println("transactions more than 1 page available. iterating")
+		fc.logger.Logf("INFO transactions more than 1 page available. iterating")
 		pageIndex = 2
 		for pageIndex <= data.Meta.Pagination.TotalPages {
 			res, err := fc.SendGetRequestWithToken(
-				fmt.Sprintf("%s/api/v1/transactions?page=%d", fc.AppURL, pageIndex),
+				fmt.Sprintf("%s/%s/transactions?page=%d", fc.AppURL, fireflyAPIPrefix, pageIndex),
 				fc.Token,
-				time.Duration(fc.Timeout),
 			)
 			if err != nil {
 				return nil, err
@@ -210,15 +211,12 @@ func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			for _, value := range data.Data {
-				for _, trnval := range value.Attributes.Transactions {
-					trn := fmt.Sprintf("%s,%s", trnval.Category, trnval.Description)
-					transactions = append(transactions, trn)
-				}
-			}
-			log.Printf("page %d...", pageIndex)
+			resSlice = append(resSlice, buildCategoryDescriptionSlice(data)...)
+			//log.Printf("page %d...", pageIndex)
+			fc.logger.Logf("INFO page %d...", pageIndex)
 			pageIndex++
 		}
 	}
-	return transactions, err
+	// return transactions, err
+	return resSlice, err
 }

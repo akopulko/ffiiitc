@@ -53,16 +53,6 @@ url: http://fftc:8080
 active: checked
 ```
 
-- Create webhook for model to learn
-```yaml
-title: learn
-trigger: after transaction update
-response: transaction details
-delivery: json
-url: http://fftc:8080/learn
-active: checked
-```
-
 
 ### Troubleshooting
 You can check `ffiiitc` logs to see if there are any errors:<br> `docker compose logs fftc -f`
