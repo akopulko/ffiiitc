@@ -171,6 +171,18 @@ func buildCategoryDescriptionSlice(data FireFlyTransactionsResponse) []string {
 	return res
 }
 
+func buildTransactionsDataset(data FireFlyTransactionsResponse) [][]string {
+	var res [][]string
+	for _, value := range data.Data {
+		for _, trnval := range value.Attributes.Transactions {
+			//trn := fmt.Sprintf("%s,%s", trnval.Category, trnval.Description)
+			trn := []string{trnval.Category, trnval.Description}
+			res = append(res, trn)
+		}
+	}
+	return res
+}
+
 // get all transactions
 // returns slice of strings "transaction description, category"
 func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
@@ -218,5 +230,48 @@ func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
 		}
 	}
 	// return transactions, err
+	return resSlice, err
+}
+
+func (fc *FireFlyHttpClient) GetTransactionsDataset() ([][]string, error) {
+	var pageIndex int
+	fc.logger.Logf("INFO get first page of transactions")
+	res, err := fc.SendGetRequestWithToken(
+		fmt.Sprintf("%s/api/v1/transactions?page=1", fc.AppURL),
+		fc.Token,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var data FireFlyTransactionsResponse
+	err = json.Unmarshal(res, &data)
+	if err != nil {
+		return nil, err
+	}
+	resSlice := buildTransactionsDataset(data)
+
+	fc.logger.Logf("INFO transactions total pages: %d", data.Meta.Pagination.TotalPages)
+	if data.Meta.Pagination.TotalPages > 1 {
+		fc.logger.Logf("INFO transactions more than 1 page available. iterating")
+		pageIndex = 2
+		for pageIndex <= data.Meta.Pagination.TotalPages {
+			res, err := fc.SendGetRequestWithToken(
+				fmt.Sprintf("%s/%s/transactions?page=%d", fc.AppURL, fireflyAPIPrefix, pageIndex),
+				fc.Token,
+			)
+			if err != nil {
+				return nil, err
+			}
+			var data FireFlyTransactionsResponse
+			err = json.Unmarshal(res, &data)
+			if err != nil {
+				return nil, err
+			}
+			resSlice = append(resSlice, buildTransactionsDataset(data)...)
+			fc.logger.Logf("INFO page %d...", pageIndex)
+			pageIndex++
+		}
+	}
 	return resSlice, err
 }

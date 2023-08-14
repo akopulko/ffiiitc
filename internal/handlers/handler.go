@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/go-pkgz/lgr"
-	"github.com/navossoc/bayesian"
 )
 
 type WebHookHandler struct {
@@ -77,47 +76,47 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 	w.WriteHeader(http.StatusOK)
 }
 
-// http handler for new transaction
-func (wh *WebHookHandler) HandleUpdateTransactionWebHook(w http.ResponseWriter, r *http.Request) {
+// http handler for updated transaction
+// func (wh *WebHookHandler) HandleUpdateTransactionWebHook(w http.ResponseWriter, r *http.Request) {
 
-	// only allow post method
-	if r.Method != http.MethodPost {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
+// 	// only allow post method
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "bad request", http.StatusBadRequest)
+// 		return
+// 	}
 
-	// decode payload
-	decoder := json.NewDecoder(r.Body)
-	var hookData FireflyWebHook
-	err := decoder.Decode(&hookData)
-	if err != nil {
-		http.Error(w, "bad data", http.StatusBadRequest)
-		return
-	}
+// 	// decode payload
+// 	decoder := json.NewDecoder(r.Body)
+// 	var hookData FireflyWebHook
+// 	err := decoder.Decode(&hookData)
+// 	if err != nil {
+// 		http.Error(w, "bad data", http.StatusBadRequest)
+// 		return
+// 	}
 
-	// perform training
-	for _, trn := range hookData.Content.Transactions {
-		wh.Logger.Logf(
-			"hook update trn: received (id: %v) (desc: %s) (cat: %s)",
-			trn.Id,
-			trn.Description,
-			trn.Category,
-		)
+// 	// perform training
+// 	for _, trn := range hookData.Content.Transactions {
+// 		wh.Logger.Logf(
+// 			"hook update trn: received (id: %v) (desc: %s) (cat: %s)",
+// 			trn.Id,
+// 			trn.Description,
+// 			trn.Category,
+// 		)
 
-		if trn.Category != "" {
-			err := wh.Classifier.Train(trn.Description, trn.Category)
-			if err != nil {
-				wh.Logger.Logf("hook update trn: error updating model: %v", err)
-			}
-			wh.Logger.Logf(
-				"hook update trn: (cat: %s) (features: %v)",
-				trn.Category,
-				wh.Classifier.Classifier.WordsByClass(bayesian.Class(trn.Category)),
-			)
-		} else {
-			wh.Logger.Logf("skip training. Category is empty")
-		}
+// 		if trn.Category != "" {
+// 			err := wh.Classifier.Train(trn.Description, trn.Category)
+// 			if err != nil {
+// 				wh.Logger.Logf("hook update trn: error updating model: %v", err)
+// 			}
+// 			wh.Logger.Logf(
+// 				"hook update trn: (cat: %s) (features: %v)",
+// 				trn.Category,
+// 				wh.Classifier.Classifier.WordsByClass(bayesian.Class(trn.Category)),
+// 			)
+// 		} else {
+// 			wh.Logger.Logf("skip training. Category is empty")
+// 		}
 
-	}
-	w.WriteHeader(http.StatusOK)
-}
+// 	// }
+// 	w.WriteHeader(http.StatusOK)
+// }
