@@ -43,7 +43,7 @@ volumes:
 ```
 - Start `docker compose -f docker-compose.yml up -d`
 
-#### Prue Docker
+#### Docker
 ```
 docker run
   -d
@@ -51,7 +51,7 @@ docker run
   -e 'FF_API_KEY'='<YOUR_PAT_GOES_HERE>'
   -e 'FF_APP_URL'='<FIREFLY_ADDRESS:PORT>'
   -p '<EXPOSED_PORT>:8080'
-  -v '<TRAINED_MODEL_FOLDER>':'/app/data':'rw' 'safaqwqrfw/ffiiitc'
+  -v '<TRAINED_MODEL_FOLDER>':'/app/data':'rw' 'ffiiitc'
 ```
 #### Configure Web Hooks in FireFly
 In `FireFly` go to `Automation -> Webhooks` and click `Create new webhook`
