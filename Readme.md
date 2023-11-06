@@ -17,6 +17,7 @@ Every time you add new transaction to FireFly III, either manually or via import
 - `git clone https://github.com/akopulko/ffiiitc.git`
 - `docker build -t ffiiitc:latest .`
 #### Run
+##### Docker Compose
 - Stop `docker compose -f docker-compose.yml down`
 - Modify your FireFly III docker compose file add the following
 ```yaml
@@ -29,11 +30,11 @@ Every time you add new transaction to FireFly III, either manually or via import
     container_name: ffiiitc
     environment:
       - FF_API_KEY=<YOUR_PAT_GOES_HERE>
-      - FF_APP_URL=http://app:8080
+      - FF_APP_URL=<FIREFLY_ADDRESS:PORT>
     volumes:
       - ffiiitc-data:/app/data
     ports:
-     - '8082:8080'
+     - '<EXPOSED_PORT>:8080'
     depends_on:
      - app
 volumes:
@@ -41,6 +42,17 @@ volumes:
    ffiiitc-data:
 ```
 - Start `docker compose -f docker-compose.yml up -d`
+
+#### Prue Docker
+```
+docker run
+  -d
+  --name='ffiiitc'
+  -e 'FF_API_KEY'='<YOUR_PAT_GOES_HERE>'
+  -e 'FF_APP_URL'='<FIREFLY_ADDRESS:PORT>'
+  -p '<EXPOSED_PORT>:8080'
+  -v '<TRAINED_MODEL_FOLDER>':'/app/data':'rw' 'safaqwqrfw/ffiiitc'
+```
 #### Configure Web Hooks in FireFly
 In `FireFly` go to `Automation -> Webhooks` and click `Create new webhook`
 - Create webhook for transaction classification
@@ -49,7 +61,7 @@ title: classify
 trigger: after transaction creation
 response: transaction details
 delivery: json
-url: http://fftc:8080
+url: http://fftc:<EXPOSED_PORT>/classify
 active: checked
 ```
 
