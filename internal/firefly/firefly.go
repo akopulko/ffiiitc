@@ -35,6 +35,7 @@ type FireFlyTransaction struct {
 
 type FireFlyTransactions struct {
 	FireWebHooks bool                 `json:"fire_webhooks"`
+	Id           string                  `json:"id"`
 	Transactions []FireFlyTransaction `json:"transactions"`
 }
 
@@ -114,14 +115,15 @@ func (fc *FireFlyHttpClient) SendPutRequestWithToken(url, token string, data []b
 	return fc.sendRequestWithToken(http.MethodPut, url, token, data)
 }
 
-func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, category string) error {
+func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, trans_id, category string) error {
 	//log.Printf("updating transaction: %s", id)
 
 	trn := FireFlyTransactions{
 		FireWebHooks: false,
+		Id: id,
 		Transactions: []FireFlyTransaction{
 			{
-				TransactionID: id,
+				TransactionID: trans_id,
 				Category:      category,
 			},
 		},
