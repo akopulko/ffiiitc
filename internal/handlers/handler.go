@@ -25,6 +25,7 @@ type FireflyTrn struct {
 }
 
 type FireFlyContent struct {
+	Id           int64  `json:"id"`
 	Transactions []FireflyTrn `json:"transactions"`
 }
 
@@ -62,16 +63,16 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 	for _, trn := range hookData.Content.Transactions {
 		wh.Logger.Logf(
 			"INFO hook new trn: received (id: %v) (description: %s)",
-			trn.Id,
+			hookData.Content.Id,
 			trn.Description,
 		)
 		cat := wh.Classifier.ClassifyTransaction(trn.Description)
-		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)", trn.Id, cat)
-		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt(trn.Id, 10), cat)
+		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)",  hookData.Content.Id, cat)
+		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt( hookData.Content.Id, 10), strconv.FormatInt(trn.Id, 10), cat)
 		if err != nil {
-			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v", trn.Id, err)
+			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v",  hookData.Content.Id, err)
 		}
-		wh.Logger.Logf("INFO hook new trn: updated (id: %v)", trn.Id)
+		wh.Logger.Logf("INFO hook new trn: updated (id: %v)",  hookData.Content.Id)
 
 	}
 	w.WriteHeader(http.StatusOK)

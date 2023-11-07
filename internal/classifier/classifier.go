@@ -4,7 +4,8 @@ import (
 	"ffiiitc/internal/firefly"
 	"ffiiitc/internal/utils"
 	"fmt"
-
+	"os"
+    "time"
 	"github.com/go-pkgz/lgr"
 	"github.com/navossoc/bayesian"
 )
@@ -26,7 +27,8 @@ func NewTrnClassifier(fc *firefly.FireFlyHttpClient, l *lgr.Logger) *TrnClassifi
 
 	l.Logf("INFO trying to load classifier from %s", modelFile)
 	c, err := loadClassifierFromFile(modelFile)
-	if err != nil {
+	file, _ := os.Stat(modelFile)
+	if err != nil || time.Now().Sub(file.ModTime()) > 12*time.Hour{
 		l.Logf("ERROR loading classifier from file %s, %v", modelFile, err)
 		//log.Println("no model file found, need to do some training...")
 		l.Logf("INFO need to do some training...")
