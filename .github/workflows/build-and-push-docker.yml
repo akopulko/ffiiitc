@@ -39,3 +39,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: akopulko/ffiiitc:latest
+      - name: Update Docker Hub Overview
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          repository: akopulko/ffiiitc
