@@ -33,7 +33,7 @@ Every time you add new transaction to FireFly III, either manually or via import
 
 ```yaml
   fftc:
-    image: ozmoroz/ffiiitc:latest
+    image: akopulko/ffiiitc:latest
     hostname: fftc
     networks:
       - firefly_iii
