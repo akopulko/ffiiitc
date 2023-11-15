@@ -17,8 +17,6 @@ Every time you add new transaction to FireFly III, either manually or via import
 - At least **one or two statements** imported into FireFly with transactions manually **categorised**. This is required for classifier to train on your dataset and is very important.
 - Have personal access token (PAT) generated in FireFly III. Go to `Options->Profile->OAuth` click `Create new token`
 
-#### Build
-
 ##### Docker Compose
 
 - `git clone https://github.com/akopulko/ffiiitc.git`
