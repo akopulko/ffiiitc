@@ -14,6 +14,8 @@ RUN echo "Building for ${TARGETPLATFORM}..."
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/ffiiitc
 
 FROM alpine:latest as release
-COPY --from=build /out/ffiiitc /bin
+WORKDIR /app
+RUN mkdir -p /app/data
+COPY --from=build /out/ffiiitc /app/ffiiitc
 EXPOSE 8082
-ENTRYPOINT  ["/bin/ffiiitc"]
+ENTRYPOINT  ["/app/ffiiitc"]
