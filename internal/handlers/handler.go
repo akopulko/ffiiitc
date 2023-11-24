@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"ffiiitc/internal/classifier"
+	"ffiiitc/internal/config"
 	"ffiiitc/internal/firefly"
+
 	"net/http"
 	"strconv"
 
@@ -24,7 +26,7 @@ type FireflyTrn struct {
 }
 
 type FireFlyContent struct {
-	Id           int64  `json:"id"`
+	Id           int64        `json:"id"`
 	Transactions []FireflyTrn `json:"transactions"`
 }
 
@@ -66,14 +68,48 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 			trn.Description,
 		)
 		cat := wh.Classifier.ClassifyTransaction(trn.Description)
-		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)",  hookData.Content.Id, cat)
-		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt( hookData.Content.Id, 10), strconv.FormatInt(trn.Id, 10), cat)
+		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)", hookData.Content.Id, cat)
+		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt(hookData.Content.Id, 10), strconv.FormatInt(trn.Id, 10), cat)
 		if err != nil {
-			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v",  hookData.Content.Id, err)
+			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v", hookData.Content.Id, err)
 		}
-		wh.Logger.Logf("INFO hook new trn: updated (id: %v)",  hookData.Content.Id)
+		wh.Logger.Logf("INFO hook new trn: updated (id: %v)", hookData.Content.Id)
 
 	}
+	w.WriteHeader(http.StatusOK)
+}
+
+// http handler for forcing to train model
+func (wh *WebHookHandler) HandleForceTrainingModel(w http.ResponseWriter, r *http.Request) {
+
+	// only allow post method
+	if r.Method != http.MethodGet {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	wh.Logger.Logf("INFO Received request to perform force training")
+	wh.Logger.Logf("INFO Requesting transactions data from Firefly")
+	trnDataset, err := wh.FireflyClient.GetTransactionsDataset()
+	if err != nil || len(trnDataset) == 0 {
+		wh.Logger.Logf("ERROR: Error while getting transactions data\n %v", err)
+	} else {
+		wh.Logger.Logf("DEBUG Got training data\n %v", trnDataset)
+		cls, err := classifier.NewTrnClassifierWithTraining(trnDataset, wh.Logger)
+		if err != nil {
+			wh.Logger.Logf("ERROR creating classifier from dataset:\n %v", err)
+		} else {
+			wh.Logger.Logf("INFO forced training completed...")
+			wh.Logger.Logf("INFO saving data to model...")
+			err = cls.SaveClassifierToFile(config.ModelFile)
+			if err != nil {
+				wh.Logger.Logf("ERROR saving model to file:\n %v", err)
+			} else {
+				wh.Logger.Logf("INFO: forced training completed and model saved. Please restart 'ffiiitc' container")
+			}
+		}
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -5,6 +5,11 @@ import (
 	"os"
 )
 
+const (
+	FireflyAppTimeout = 10               // 10 sec for fftc to app service timeout
+	ModelFile         = "data/model.gob" //file name to store model
+)
+
 type Config struct {
 	APIKey string
 	FFApp  string
