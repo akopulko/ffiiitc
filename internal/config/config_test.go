@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"testing"
+
+	"github.com/go-pkgz/lgr"
 )
 
 func TestEnvVarExist(t *testing.T) {
@@ -28,13 +30,16 @@ func TestEnvVarExist(t *testing.T) {
 }
 
 func TestNewConfig(t *testing.T) {
+	logger := lgr.New(lgr.Debug, lgr.CallerFunc)
+
 	t.Run("AllEnvVarsExist", func(t *testing.T) {
+
 		// Set up temporary environment variables for testing
 		os.Setenv("FF_API_KEY", "test_api_key")
 		os.Setenv("FF_APP_URL", "test_app_url")
 
 		// Create a new config
-		cfg, err := NewConfig()
+		cfg, err := NewConfig(logger)
 
 		// Check if there is no error
 		if err != nil {
@@ -56,7 +61,7 @@ func TestNewConfig(t *testing.T) {
 
 	t.Run("MissingEnvVars", func(t *testing.T) {
 		// Create a new config
-		cfg, err := NewConfig()
+		cfg, err := NewConfig(logger)
 
 		// Check if there is an error
 		if err == nil {
