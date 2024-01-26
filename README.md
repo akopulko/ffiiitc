@@ -51,7 +51,7 @@ volumes:
    ffiiitc-data:
 ```
 
-You can also prepend your environment variable names with `_FILE` instead, having their value point to the file where tha actual sensitive value is stored. This works with any environment variable.
+You can also append your environment variable names with `_FILE` instead, having their value point to the file where tha actual sensitive value is stored. This works with any environment variable.
 
 ```yaml
 secrets:
