@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/go-pkgz/lgr"
 )
@@ -41,11 +42,13 @@ func LookupEnvVarValueFromFile(path string, logger *lgr.Logger) (string, bool) {
 	}
 
 	logger.Logf("DEBUG reading file...")
-	value, e := os.ReadFile(path)
+	valueBytes, e := os.ReadFile(path)
 
 	if e != nil {
 		panic(e)
 	}
+	value := string(valueBytes)
+	value = strings.TrimSuffix(value, "\n")
 
 	return string(value), true
 }
