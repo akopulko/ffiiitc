@@ -51,6 +51,39 @@ volumes:
    ffiiitc-data:
 ```
 
+You can also append your environment variable names with `_FILE` instead, having their value point to the file where tha actual sensitive value is stored. This works with any environment variable.
+
+```yaml
+secrets:
+  ffiiitc-personal-access-token:
+    file: "<path/to/secrets/location>/ffiiitc-personal-access-token"
+
+services:
+  ...
+  fftc:
+    image: akopulko/ffiiitc:latest
+    hostname: fftc
+    networks:
+      - firefly_iii
+    restart: always
+    container_name: ffiiitc
+    secrets:
+      - "ffiiitc-personal-access-token"
+    environment:
+      - FF_API_KEY_FILE="/run/secrets/ffiiitc-personal-access-token"
+      - FF_APP_URL=<FIREFLY_ADDRESS:PORT>
+    volumes:
+      - ffiiitc-data:/app/data
+    ports:
+      - '<EXPOSED_PORT>:8080'
+    depends_on:
+      - app
+
+volumes:
+  ...
+  ffiiitc-data:
+```
+
 - Start `docker compose -f docker-compose.yml up -d`
 
 #### Docker

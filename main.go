@@ -18,7 +18,7 @@ func main() {
 
 	// get the config
 	l.Logf("INFO getting config")
-	cfg, err := config.NewConfig()
+	cfg, err := config.NewConfig(l)
 	if err != nil {
 		l.Logf("FATAL getting config: %v", err)
 	}
