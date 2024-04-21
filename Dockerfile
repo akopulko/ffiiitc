@@ -17,5 +17,5 @@ FROM alpine:latest as release
 WORKDIR /app
 RUN mkdir -p /app/data
 COPY --from=build /out/ffiiitc /app/ffiiitc
-EXPOSE 8082
+EXPOSE 8080
 ENTRYPOINT  ["/app/ffiiitc"]
