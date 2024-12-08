@@ -86,6 +86,7 @@ func (fc *FireFlyHttpClient) sendRequestWithToken(method, url, token string, dat
 	// Set the Authorization header with the Bearer token.
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("accept", "application/vnd.api+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
