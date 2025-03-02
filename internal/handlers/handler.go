@@ -7,7 +7,6 @@ import (
 	"ffiiitc/internal/firefly"
 
 	"net/http"
-	"strconv"
 
 	"github.com/go-pkgz/lgr"
 )
@@ -20,13 +19,13 @@ type WebHookHandler struct {
 
 // structs to handle payload from new transaction web hook
 type FireflyTrn struct {
-	Id          int64  `json:"transaction_journal_id"`
+	Id          string  `json:"transaction_journal_id"`
 	Description string `json:"description"`
 	Category    string `json:"category_name"`
 }
 
 type FireFlyContent struct {
-	Id           int64        `json:"id"`
+	Id           string        `json:"id"`
 	Transactions []FireflyTrn `json:"transactions"`
 }
 
@@ -69,7 +68,7 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 		)
 		cat := wh.Classifier.ClassifyTransaction(trn.Description)
 		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)", hookData.Content.Id, cat)
-		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt(hookData.Content.Id, 10), strconv.FormatInt(trn.Id, 10), cat)
+		err = wh.FireflyClient.UpdateTransactionCategory(hookData.Content.Id, trn.Id, cat)
 		if err != nil {
 			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v", hookData.Content.Id, err)
 		}
