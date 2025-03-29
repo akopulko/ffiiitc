@@ -20,9 +20,9 @@ type WebHookHandler struct {
 
 // structs to handle payload from new transaction web hook
 type FireflyTrn struct {
-	Id          int64  `json:"transaction_journal_id"`
-	Description string `json:"description"`
-	Category    string `json:"category_name"`
+	Id          string   `json:"transaction_journal_id"`
+	Description string   `json:"description"`
+	Category    string   `json:"category_name"`
 	Tags        []string `json:"tags"`
 }
 
@@ -57,6 +57,7 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 	var hookData FireflyWebHook
 	err := decoder.Decode(&hookData)
 	if err != nil {
+		wh.Logger.Logf("ERROR decoding webhook payload: %v", err)
 		http.Error(w, "bad data", http.StatusBadRequest)
 		return
 	}
@@ -70,7 +71,7 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 		)
 		cat := wh.Classifier.ClassifyTransaction(trn.Description)
 		wh.Logger.Logf("INFO hook new trn: classified (id: %v) (category: %s)", hookData.Content.Id, cat)
-		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt(hookData.Content.Id, 10), strconv.FormatInt(trn.Id, 10), cat, trn.Tags)
+		err = wh.FireflyClient.UpdateTransactionCategory(strconv.FormatInt(hookData.Content.Id, 10), trn.Id, cat, trn.Tags)
 		if err != nil {
 			wh.Logger.Logf("ERROR hook new trn: error updating (id: %v) %v", hookData.Content.Id, err)
 		}
