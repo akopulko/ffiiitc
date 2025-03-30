@@ -38,10 +38,43 @@ func main() {
 		// get transactions in data set
 		//[ [cat, trn description], [cat, trn description]... ]
 		trnDataset, err := fc.GetTransactionsDataset()
-		if err != nil || len(trnDataset) == 0 {
-			l.Logf("FATAL: %v", err)
-		}
 		l.Logf("DEBUG data set:\n %v", trnDataset)
+
+		if err != nil {
+			l.Logf("FATAL: unable to get list of transactions %v", err)
+		}
+
+		// byesian package requires at least 2 transactions with different categories to start training
+
+		// we fail if no transactions in Firefly
+		if len(trnDataset) == 0 {
+			l.Logf("FATAL: no transactions in Firefly. At least 2 manually categorised transactions with different categories are required %v", trnDataset)
+		}
+
+		// we also check for at least 2 different categories available if transactions exist
+		categories := make(map[string]int)
+		for i, data := range trnDataset {
+			if len(data) == 0 {
+				l.Logf("WARN skipping empty transaction data at index %d", i)
+				continue
+			}
+			category := data[0]
+			if category == "" {
+				l.Logf("WARN skipping transaction with empty category at index %d", i)
+				continue
+			}
+			categories[category]++
+		}
+
+		l.Logf("INFO found %d different categories: %v", len(categories), categories)
+
+		if len(categories) < 2 {
+			l.Logf("FATAL: classifier needs at least 2 different categories in transactions, got %d. Categories found: %v",
+				len(categories),
+				categories)
+			return
+		}
+
 		cls, err = classifier.NewTrnClassifierWithTraining(trnDataset, l)
 		if err != nil {
 			l.Logf("FATAL: %v", err)

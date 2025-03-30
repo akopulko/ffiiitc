@@ -28,15 +28,15 @@ type FireFlyHttpClient struct {
 
 // set of structs for firefly transaction json data
 type FireFlyTransaction struct {
-	Description   string `json:"description"`
-	Category      string `json:"category_name"`
-	TransactionID string `json:"transaction_journal_id"`
+	Description   string   `json:"description"`
+	Category      string   `json:"category_name"`
+	TransactionID string   `json:"transaction_journal_id"`
 	Tags          []string `json:"tags"`
 }
 
 type FireFlyTransactions struct {
 	FireWebHooks bool                 `json:"fire_webhooks"`
-	Id           string                  `json:"id"`
+	Id           string               `json:"id"`
 	Transactions []FireFlyTransaction `json:"transactions"`
 }
 
@@ -119,15 +119,15 @@ func (fc *FireFlyHttpClient) SendPutRequestWithToken(url, token string, data []b
 
 func (fc *FireFlyHttpClient) UpdateTransactionCategory(id, trans_id, category string, tags []string) error {
 	//log.Printf("updating transaction: %s", id)
-	
+
 	trn := FireFlyTransactions{
 		FireWebHooks: false,
-		Id: id,
+		Id:           id,
 		Transactions: []FireFlyTransaction{
 			{
 				TransactionID: trans_id,
 				Category:      category,
-				Tags:          append(tags,[]string{"ffiiitc"}...),
+				Tags:          append(tags, []string{"ffiiitc"}...),
 			},
 		},
 	}
@@ -254,6 +254,8 @@ func (fc *FireFlyHttpClient) GetTransactionsDataset() ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	fc.logger.Logf("DEBUG raw transactions data: %v", data)
+
 	resSlice := buildTransactionsDataset(data)
 
 	fc.logger.Logf("INFO transactions total pages: %d", data.Meta.Pagination.TotalPages)
