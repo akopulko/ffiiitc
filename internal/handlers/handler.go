@@ -84,15 +84,19 @@ func (wh *WebHookHandler) HandleNewTransactionWebHook(w http.ResponseWriter, r *
 // http handler for forcing to train model
 func (wh *WebHookHandler) HandleForceTrainingModel(w http.ResponseWriter, r *http.Request) {
 
-	// only allow post method
+	// only allow get method
 	if r.Method != http.MethodGet {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 
+	query := r.URL.Query()
+	startStr := query.Get("start")
+	endStr := query.Get("end")
+
 	wh.Logger.Logf("INFO Received request to perform force training")
 	wh.Logger.Logf("INFO Requesting transactions data from Firefly")
-	trnDataset, err := wh.FireflyClient.GetTransactionsDataset()
+	trnDataset, err := wh.FireflyClient.GetTransactionsDataset(startStr, endStr)
 	if err != nil || len(trnDataset) == 0 {
 		wh.Logger.Logf("ERROR: Error while getting transactions data\n %v", err)
 	} else {
