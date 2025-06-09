@@ -238,11 +238,32 @@ func (fc *FireFlyHttpClient) GetTransactions() ([]string, error) {
 	return resSlice, err
 }
 
-func (fc *FireFlyHttpClient) GetTransactionsDataset() ([][]string, error) {
+func (fc *FireFlyHttpClient) GetTransactionsDataset(startStr, endStr string) ([][]string, error) {
 	var pageIndex int
 	fc.logger.Logf("INFO get first page of transactions")
+	dateRangeQuery := ""
+	if startStr != "" {
+		_, err := time.Parse("2006-01-02", startStr)
+		if err == nil {
+			dateRangeQuery = fmt.Sprintf("&start=%s", startStr)
+			fc.logger.Logf("DEBUG start date: %s", startStr)
+		} else {
+			fc.logger.Logf("WARN invalid start date format: %v", err)
+		}
+	}
+
+	if endStr != "" {
+		_, err := time.Parse("2006-01-02", endStr)
+		if err == nil {
+			dateRangeQuery += fmt.Sprintf("&end=%s", endStr)
+			fc.logger.Logf("DEBUG end date: %s", endStr)
+		} else {
+			fc.logger.Logf("WARN invalid end date format: %v", err)
+		}
+	}
+
 	res, err := fc.SendGetRequestWithToken(
-		fmt.Sprintf("%s/api/v1/transactions?page=1", fc.AppURL),
+		fmt.Sprintf("%s/%s/transactions?page=1%s", fc.AppURL, fireflyAPIPrefix, dateRangeQuery),
 		fc.Token,
 	)
 	if err != nil {
@@ -264,7 +285,7 @@ func (fc *FireFlyHttpClient) GetTransactionsDataset() ([][]string, error) {
 		pageIndex = 2
 		for pageIndex <= data.Meta.Pagination.TotalPages {
 			res, err := fc.SendGetRequestWithToken(
-				fmt.Sprintf("%s/%s/transactions?page=%d", fc.AppURL, fireflyAPIPrefix, pageIndex),
+				fmt.Sprintf("%s/%s/transactions?page=%d%s", fc.AppURL, fireflyAPIPrefix, pageIndex, dateRangeQuery),
 				fc.Token,
 			)
 			if err != nil {

@@ -37,7 +37,8 @@ func main() {
 		l.Logf("INFO looks like we need to do some training...")
 		// get transactions in data set
 		//[ [cat, trn description], [cat, trn description]... ]
-		trnDataset, err := fc.GetTransactionsDataset()
+		// Empty string for start and end date means all transactions
+		trnDataset, err := fc.GetTransactionsDataset("", "")
 		l.Logf("DEBUG data set:\n %v", trnDataset)
 
 		if err != nil {
